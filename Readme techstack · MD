@@ -1,0 +1,82 @@
+NeuralGate — Tech Stack
+Language & Runtime
+
+Python 3.11 — primary language for all services
+asyncio — native Python async runtime for non-blocking request handling
+
+API & Web Framework
+
+FastAPI — async API framework for the edge layer and request entry point
+Uvicorn — ASGI server that runs FastAPI in production
+Pydantic v2 — request/response schema validation and serialization
+
+Message Queue & Task Processing
+
+Redis — in-memory store for health scores, pool state, rate limit counters, and circuit breaker state
+Celery — distributed task queue for managing batch pool workers
+Redis Streams — lightweight queue for async batch job dispatch
+
+Model Serving (inference backend)
+
+vLLM — LLM inference engine with PagedAttention and continuous batching
+Hugging Face Transformers — model loading, tokenization, and config management
+Hugging Face Hub — model registry and versioned model pulls
+Triton Inference Server (optional) — GPU-optimized serving for non-LLM model variants
+
+Vector Database & Retrieval
+
+FAISS — local approximate nearest neighbor search for vector similarity
+pgvector — PostgreSQL extension for vector storage in production
+PostgreSQL — primary relational store for retrieval metadata and request logs
+sentence-transformers — embedding generation for RAG retrieval pipeline
+
+Observability
+
+Prometheus — metrics collection (p95, p99, queue depth, GPU utilization, token throughput, error rate)
+Grafana — dashboards for latency, pool health, fallback events, and GPU saturation
+OpenTelemetry — distributed tracing across edge → router → pool → retrieval
+structlog — structured JSON logging with request-level context propagation
+Alertmanager — alert routing for OOM events, fallback triggers, latency breaches
+
+Infrastructure & Cloud (AWS)
+
+EC2 (g4dn.xlarge or g5.xlarge) — GPU instances for online and large-context serving pools
+EC2 (t3.medium) — CPU instances for router, edge layer, and batch coordination
+ElastiCache (Redis) — managed Redis for health scores and circuit breaker state
+RDS (PostgreSQL) — managed database for retrieval metadata and request audit logs
+S3 — model artifact storage and request payload archiving for shadow testing
+ECS / EKS — container orchestration for pool autoscaling and service deployment
+ALB (Application Load Balancer) — entry point before the edge layer
+CloudWatch — infrastructure-level metrics and log aggregation
+IAM — service-to-service authentication and secrets access control
+
+Containerization & Deployment
+
+Docker — containerized packaging of every service component
+Docker Compose — local development and integration testing environment
+Kubernetes (EKS) — production orchestration with HPA for pool autoscaling
+Helm — Kubernetes manifest templating for environment-specific configs
+
+Load Testing & Chaos Engineering
+
+Locust — load testing with realistic traffic profiles (online, burst, mixed)
+pytest — unit, integration, and regression test runner
+pytest-asyncio — async test support for FastAPI and asyncio components
+httpx — async HTTP client for integration tests against live endpoints
+
+Rollout & Experimentation
+
+Custom shadow mode — built in rollout/shadow_mode.py, forks live traffic to new model versions without user impact
+Custom canary engine — built in rollout/canary.py, shifts traffic percentage with auto-rollback on metric breach
+Feature flags via Redis — runtime toggling of fallback tiers, hedged requests, and speculative decoding
+
+Config & Secrets Management
+
+YAML configs — pool config, fallback tiers, routing rules, alert thresholds (in configs/)
+python-dotenv — local .env loading for secrets and environment variables
+AWS Secrets Manager — production secrets for API keys, DB credentials, model tokens
+
+Key Python Libraries
+LibraryPurposefastapiEdge layer API serveruvicornASGI runtimepydanticSchema validationredisHealth scores, circuit breaker stateceleryBatch worker orchestrationvllmLLM inference enginetransformersTokenization and model configfaiss-cpu / faiss-gpuVector similarity searchsentence-transformersEmbedding generationprometheus-clientMetrics instrumentationopentelemetry-sdkDistributed tracingstructlogStructured JSON logginglocustLoad testingpytest + pytest-asyncioTesting frameworkhttpxAsync HTTP client for testspython-dotenvEnvironment variable loadingpyyamlYAML config parsingasyncioAsync concurrency primitives
+Component to Tech Stack Mapping
+NeuralGate ComponentPrimary Techedge/ — API server and middlewareFastAPI, Uvicorn, Pydantic, Redisrouter/ — request classification and dispatchPython, Redis, custom scoring logicpools/ — isolated serving workersvLLM, Celery, Redis Streams, ECS/EKSfallback/ — circuit breaker and fallback tiersPython, Redis, asyncioretrieval/ — RAG pipeline with time budgetFAISS, pgvector, sentence-transformers, PostgreSQLobservability/ — metrics, traces, logs, alertsPrometheus, OpenTelemetry, structlog, Grafanarollout/ — shadow mode and canary deployPython, Redis, S3, custom logicchaos/ — failure injection and drillsPython, httpx, custom injectorsload_tests/ — traffic simulationLocusttests/ — unit, integration, regressionpytest, pytest-asyncio, httpxconfigs/ — system configurationYAML, python-dotenv, AWS Secrets Managerdashboards/ — visual monitoringGrafana JSON, Prometheus datasource
